@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -89,8 +89,8 @@
     <div class="team">
       <h2>Zé + Sandrina</h2>
       <div class="players">
-        <img src="images/ze.jpg" alt="Zé" class="player-img">
-        <img src="images/sandrina.jpg" alt="Sandrina" class="player-img">
+        <img src="images/ze.JPG" alt="Zé" class="player-img">
+        <img src="images/sandrina.JPG" alt="Sandrina" class="player-img">
       </div>
       <div class="score" id="score1">0 <span id="badge1"></span></div>
       <button onclick="secureAction(() => addWin(1))">+ Win</button>
@@ -106,8 +106,8 @@
     <div class="team">
       <h2>Vitor + Leandro</h2>
       <div class="players">
-        <img src="images/vitor.jpg" alt="Vitor" class="player-img">
-        <img src="images/leandro.jpg" alt="Leandro" class="player-img">
+        <img src="images/vitor.JPG" alt="Vitor" class="player-img">
+        <img src="images/leandro.JPG" alt="Leandro" class="player-img">
       </div>
       <div class="score" id="score2">0 <span id="badge2"></span></div>
       <button onclick="secureAction(() => addWin(2))">+ Win</button>
@@ -169,7 +169,55 @@
       update();
     }
 
-    function update()
+    function update() {
+      document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
+      document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
+
+      const totalMatches = score1 + score2 + ties;
+      document.getElementById("totalMatches").textContent = totalMatches;
+      document.getElementById("ties").textContent = ties;
+      document.getElementById("rate1").textContent = totalMatches > 0 ? Math.round((score1/totalMatches)*100) + "%" : "0%";
+      document.getElementById("rate2").textContent = totalMatches > 0 ? Math.round((score2/totalMatches)*100) + "%" : "0%";
+
+      const list = document.getElementById("historyList");
+      list.innerHTML = "";
+      history.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        list.appendChild(li);
+      });
+
+      updateBadges();
+    }
+
+    function updateBadges() {
+      const badge1 = document.getElementById("badge1");
+      const badge2 = document.getElementById("badge2");
+      badge1.textContent = "";
+      badge2.textContent = "";
+
+      if (score1 > score2) {
+        badge1.textContent = "🥇";
+        badge2.textContent = "💩";
+      } else if (score2 > score1) {
+        badge2.textContent = "🥇";
+        badge1.textContent = "💩";
+      }
+    }
+
+    function secureAction(action) {
+      const pin = prompt("Enter PIN to edit:");
+      if (pin === "0000") {
+        action();
+      } else {
+        alert("Wrong PIN!");
+      }
+    }
+
+    update();
+  </script>
+</body>
+</html>
 
 
 
