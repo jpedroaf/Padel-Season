@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Padel Scoreboard 2025/2026</title>
+  <style>
+    body {
+      font-family: 'Arial Black', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 1rem 0;
+      width: 90%;
+      max-width: 800px;
+    }
+    .team {
+      background: #111;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+    .team h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .score {
+      font-size: 5rem;
+      margin: 1rem 0;
+      color: #ffcc00;
+    }
+    button {
+      font-size: 1.2rem;
+      padding: 0.5rem 1rem;
+      margin: 0.3rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .add {
+      background: #28a745;
+      color: white;
+    }
+    .remove {
+      background: #dc3545;
+      color: white;
+    }
+    .reset {
+      background: #ffc107;
+      color: black;
+      margin-top: 1.5rem;
+    }
+    @media(max-width: 600px) {
+      .scoreboard {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Padel Scoreboard 2025/2026</h1>
+  <div class="scoreboard">
+    <div class="team" id="team1">
+      <h2>Zé + Sandrina</h2>
+      <div class="score" id="score1">0</div>
+      <button class="add" onclick="addPoint(1)">+ Win</button>
+      <button class="remove" onclick="removePoint(1)">- Win</button>
+    </div>
+    <div class="team" id="team2">
+      <h2>Vitor + Leandro</h2>
+      <div class="score" id="score2">0</div>
+      <button class="add" onclick="addPoint(2)">+ Win</button>
+      <button class="remove" onclick="removePoint(2)">- Win</button>
+    </div>
+  </div>
+  <button class="reset" onclick="resetScores()">Reset Season</button>
+
+  <script>
+    // Load scores from local storage
+    let score1 = parseInt(localStorage.getItem('score1')) || 0;
+    let score2 = parseInt(localStorage.getItem('score2')) || 0;
+
+    document.getElementById('score1').textContent = score1;
+    document.getElementById('score2').textContent = score2;
+
+    function updateDisplay() {
+      document.getElementById('score1').textContent = score1;
+      document.getElementById('score2').textContent = score2;
+      localStorage.setItem('score1', score1);
+      localStorage.setItem('score2', score2);
+    }
+
+    function addPoint(team) {
+      if (team === 1) score1++;
+      else score2++;
+      updateDisplay();
+    }
+
+    function removePoint(team) {
+      if (team === 1 && score1 > 0) score1--;
+      else if (team === 2 && score2 > 0) score2--;
+      updateDisplay();
+    }
+
+    function resetScores() {
+      if (confirm("Reset the season scores?")) {
+        score1 = 0;
+        score2 = 0;
+        updateDisplay();
+      }
+    }
+  </script>
+</body>
+</html>
