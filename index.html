@@ -7,15 +7,13 @@
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #000000, #1a1a1a, #2c2c2c);
+      background: linear-gradient(135deg, #000, #1a1a1a, #2c2c2c);
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      margin: 0;
       padding: 1rem;
+      margin: 0;
     }
     h1 {
       font-size: 3rem;
@@ -32,36 +30,56 @@
     }
     .scoreboard {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin: 1rem 0;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
       width: 95%;
-      max-width: 900px;
+      max-width: 1000px;
     }
     .team {
       background: #111;
       padding: 1.5rem;
       border-radius: 1rem;
-      box-shadow: 0 0 25px rgba(255, 100, 0, 0.8);
       text-align: center;
       border: 2px solid #ff6600;
+      box-shadow: 0 0 25px rgba(255, 100, 0, 0.8);
     }
     .team h2 {
       font-size: 1.5rem;
       margin-bottom: 0.5rem;
       text-shadow: 0 0 10px #ff6600;
     }
+    .players {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .player-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ff6600;
+      box-shadow: 0 0 15px #ff6600;
+    }
     .score {
       font-size: 5rem;
       margin: 1rem 0;
       color: #ffcc00;
-      font-family: 'Digital-7 Mono', monospace;
       text-shadow: 0 0 20px #ff0000;
+    }
+    .btn-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: center;
     }
     button {
       font-size: 1rem;
       padding: 0.5rem 1rem;
-      margin: 0.3rem;
       border: none;
       border-radius: 0.5rem;
       cursor: pointer;
@@ -71,18 +89,18 @@
     button:hover { transform: scale(1.1); }
     .add { background: #28a745; color: white; }
     .remove { background: #dc3545; color: white; }
-    .reset { background: #ffc107; color: black; margin-top: 1.5rem; }
+    .tie { background: #17a2b8; color: white; width: 80px; }
+    .reset { background: #ffc107; color: black; margin-top: 1rem; }
     .stats {
-      margin-top: 2rem;
+      margin-top: 1rem;
       background: #222;
       padding: 1rem;
       border-radius: 1rem;
       width: 95%;
-      max-width: 900px;
+      max-width: 1000px;
       box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
     }
     .stats h3 {
-      margin-top: 0;
       text-align: center;
       color: #ffcc00;
       text-shadow: 0 0 10px #ff6600;
@@ -97,29 +115,50 @@
       font-size: 0.9rem;
     }
     .history div { margin-bottom: 0.5rem; }
-    @media(max-width: 700px) {
-      .scoreboard { grid-template-columns: 1fr; }
+    @media(max-width: 900px) {
+      .scoreboard { grid-template-columns: 1fr; gap: 1rem; }
+      .btn-column { flex-direction: row; gap: 0.5rem; }
     }
   </style>
 </head>
 <body>
   <h1>🔥 Padel Season 2025/2026 🔥</h1>
-  
+
   <div class="scoreboard">
+    <!-- Team 1 -->
     <div class="team" id="team1">
       <h2>Zé + Sandrina</h2>
+      <div class="players">
+        <img src="images/ze.jpg" alt="Zé" class="player-img">
+        <img src="images/sandrina.jpg" alt="Sandrina" class="player-img">
+      </div>
       <div class="score" id="score1">0</div>
-      <button class="add" onclick="secureAction(() => addWin(1))">+ Win</button>
-      <button class="remove" onclick="secureAction(() => removeWin(1))">- Win</button>
+      <div class="btn-column">
+        <button class="add" onclick="secureAction(() => addWin(1))">+ Win</button>
+        <button class="remove" onclick="secureAction(() => removeWin(1))">- Win</button>
+      </div>
     </div>
+
+    <!-- Tie buttons column -->
+    <div class="btn-column">
+      <button class="tie" onclick="secureAction(addTie)">Tie</button>
+    </div>
+
+    <!-- Team 2 -->
     <div class="team" id="team2">
       <h2>Vitor + Leandro</h2>
+      <div class="players">
+        <img src="images/vitor.jpg" alt="Vitor" class="player-img">
+        <img src="images/leandro.jpg" alt="Leandro" class="player-img">
+      </div>
       <div class="score" id="score2">0</div>
-      <button class="add" onclick="secureAction(() => addWin(2))">+ Win</button>
-      <button class="remove" onclick="secureAction(() => removeWin(2))">- Win</button>
+      <div class="btn-column">
+        <button class="add" onclick="secureAction(() => addWin(2))">+ Win</button>
+        <button class="remove" onclick="secureAction(() => removeWin(2))">- Win</button>
+      </div>
     </div>
   </div>
-  
+
   <button class="reset" onclick="secureAction(resetScores)">Reset Season</button>
 
   <div class="stats">
@@ -127,6 +166,7 @@
     <p>Total Matches: <span id="totalMatches">0</span></p>
     <p>Zé + Sandrina Win Rate: <span id="rate1">0%</span></p>
     <p>Vitor + Leandro Win Rate: <span id="rate2">0%</span></p>
+    <p>Tie Rate: <span id="tieRate">0%</span></p>
     <div class="history" id="history"></div>
   </div>
 
@@ -134,81 +174,76 @@
     const PIN = "0000";
     let score1 = parseInt(localStorage.getItem('score1')) || 0;
     let score2 = parseInt(localStorage.getItem('score2')) || 0;
+    let ties = parseInt(localStorage.getItem('ties')) || 0;
     let history = JSON.parse(localStorage.getItem('history')) || [];
 
     function formatTimestamp() {
-      const now = new Date();
-      return now.toLocaleString();
+      return new Date().toLocaleString();
     }
 
     function updateDisplay() {
       document.getElementById('score1').textContent = score1;
       document.getElementById('score2').textContent = score2;
 
-      const totalMatches = score1 + score2;
+      const totalMatches = score1 + score2 + ties;
       document.getElementById('totalMatches').textContent = totalMatches;
 
       const rate1 = totalMatches > 0 ? ((score1 / totalMatches) * 100).toFixed(1) : 0;
       const rate2 = totalMatches > 0 ? ((score2 / totalMatches) * 100).toFixed(1) : 0;
+      const tieRate = totalMatches > 0 ? ((ties / totalMatches) * 100).toFixed(1) : 0;
 
       document.getElementById('rate1').textContent = rate1 + "%";
       document.getElementById('rate2').textContent = rate2 + "%";
+      document.getElementById('tieRate').textContent = tieRate + "%";
 
-      const historyDiv = document.getElementById('history');
-      historyDiv.innerHTML = history.map((h, i) => 
+      document.getElementById('history').innerHTML = history.map((h,i) =>
         `<div>Game ${i+1}: ${h.team} <br><small>${h.time}</small></div>`
       ).join("");
 
       localStorage.setItem('score1', score1);
       localStorage.setItem('score2', score2);
+      localStorage.setItem('ties', ties);
       localStorage.setItem('history', JSON.stringify(history));
     }
 
     function secureAction(action) {
       const input = prompt("Enter PIN to continue:");
-      if (input === PIN) {
-        action();
-      } else {
-        alert("❌ Wrong PIN!");
-      }
+      if (input === PIN) { action(); } 
+      else { alert("❌ Wrong PIN!"); }
     }
 
     function addWin(team) {
       const timestamp = formatTimestamp();
-      if (team === 1) {
-        score1++;
-        history.push({ team: "Zé + Sandrina won", time: timestamp });
-      } else {
-        score2++;
-        history.push({ team: "Vitor + Leandro won", time: timestamp });
-      }
+      if(team===1) { score1++; history.push({team:"Zé + Sandrina won", time:timestamp}); }
+      else { score2++; history.push({team:"Vitor + Leandro won", time:timestamp}); }
       updateDisplay();
     }
 
     function removeWin(team) {
-      if (team === 1 && score1 > 0) {
-        score1--;
-        history.pop();
-      } else if (team === 2 && score2 > 0) {
-        score2--;
-        history.pop();
-      }
+      if(team===1 && score1>0){ score1--; history.pop(); }
+      else if(team===2 && score2>0){ score2--; history.pop(); }
+      updateDisplay();
+    }
+
+    function addTie() {
+      const timestamp = formatTimestamp();
+      ties++;
+      history.push({team:"Tie", time: timestamp});
       updateDisplay();
     }
 
     function resetScores() {
-      if (confirm("Reset the season scores?")) {
-        score1 = 0;
-        score2 = 0;
-        history = [];
+      if(confirm("Reset the season scores?")) {
+        score1 = 0; score2 = 0; ties = 0; history = [];
         updateDisplay();
       }
     }
 
-    // Init display
     updateDisplay();
   </script>
 </body>
 </html>
+
+
 
 
