@@ -1,188 +1,345 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Padel Scoreboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      display: flex;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Padel Scoreboard</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #0d1b2a, #1b263b);
+    color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #ffd700;
+  }
+
+  .scores {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 20px;
+  }
+
+  .team {
+    background: #1b263b;
+    padding: 20px;
+    border-radius: 15px;
+    min-width: 220px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    border: 2px solid #ffd700;
+    position: relative;
+  }
+
+  .team h2 {
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+    color: #ffd700;
+  }
+
+  .players {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .players img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #ffd700;
+    object-fit: cover;
+  }
+
+  .score {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .badges {
+    font-size: 1.5rem;
+    margin-left: 10px;
+  }
+
+  button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #ffd700;
+    color: #1b263b;
+    font-weight: bold;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  #historyContainer {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 500px;
+    background: #1b263b;
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #ffd700;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  #historyContainer h3 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  #historyContainer ul {
+    padding-left: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  #totals {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+
+  #totals p {
+    background: #1b263b;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 2px solid #ffd700;
+  }
+
+  /* Confetti animation */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: #ffd700;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.8;
+    animation: fall linear forwards;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(360deg); }
+  }
+
+  /* Trophy animation */
+  .trophy {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    font-size: 4rem;
+    color: gold;
+    z-index: 10000;
+    animation: trophyAppear 1s forwards;
+  }
+
+  @keyframes trophyAppear {
+    0% { transform: translateX(-50%) scale(0); opacity: 0; }
+    50% { transform: translateX(-50%) scale(1.5); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 600px) {
+    .scores {
       flex-direction: column;
       align-items: center;
-      padding: 20px;
     }
-    h1 { margin-bottom: 20px; }
-    .scores {
-      display: flex;
-      gap: 40px;
-      margin-bottom: 20px;
-    }
-    .team {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      min-width: 180px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .team h2 { margin-bottom: 10px; }
-    button {
-      margin: 5px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover { opacity: 0.9; }
-    #historyContainer {
-      margin-top: 20px;
-      width: 100%;
-      max-width: 400px;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    #historyContainer ul { padding-left: 20px; }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <h1>Padel Scoreboard</h1>
-  
-  <div class="scores">
-    <div class="team">
-      <h2>Team Zé + Sandrina</h2>
-      <p id="score1">0 <span id="badge1"></span></p>
-      <button onclick="secureAction(() => addWin(1))">Add Win</button>
-      <button onclick="secureAction(() => removeWin(1))">Remove Win</button>
-    </div>
+<h1>Padel Scoreboard</h1>
 
-    <div class="team">
-      <h2>Team Vitor + Leandro</h2>
-      <p id="score2">0 <span id="badge2"></span></p>
-      <button onclick="secureAction(() => addWin(2))">Add Win</button>
-      <button onclick="secureAction(() => removeWin(2))">Remove Win</button>
+<div class="scores">
+  <div class="team">
+    <h2>Team Zé + Sandrina</h2>
+    <div class="players">
+      <img src="images/ze.JPG" alt="Ze">
+      <img src="images/sandrina.JPG" alt="Sandrina">
     </div>
+    <div class="score" id="score1">0 <span id="badge1" class="badges"></span></div>
+    <button onclick="secureAction(() => addWin(1))">Add Win</button>
+    <button onclick="secureAction(() => removeWin(1))">Remove Win</button>
   </div>
 
+  <div class="team">
+    <h2>Team Vitor + Leandro</h2>
+    <div class="players">
+      <img src="images/vitor.JPG" alt="Vitor">
+      <img src="images/leandro.JPG" alt="Leandro">
+    </div>
+    <div class="score" id="score2">0 <span id="badge2" class="badges"></span></div>
+    <button onclick="secureAction(() => addWin(2))">Add Win</button>
+    <button onclick="secureAction(() => removeWin(2))">Remove Win</button>
+  </div>
+</div>
+
+<div id="totals">
   <p>Total Matches: <span id="totalMatches">0</span></p>
   <p>Ties: <span id="ties">0</span></p>
   <p>Win Rates: <span id="rate1">0%</span> - <span id="rate2">0%</span></p>
+</div>
 
+<div style="text-align:center;">
   <button onclick="addTie()">Add Tie</button>
   <button onclick="secureAction(resetSeason)">Reset Season</button>
+</div>
 
-  <div id="historyContainer">
-    <h3>Match History</h3>
-    <ul id="historyList"></ul>
-  </div>
+<div id="historyContainer">
+  <h3>Match History</h3>
+  <ul id="historyList"></ul>
+</div>
 
-  <!-- Firebase Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBhjao8J2BFKz1LVrWcNTsk-ztcSr01tmE",
-      authDomain: "padel-scoreboard.firebaseapp.com",
-      databaseURL: "https://padel-scoreboard-default-rtdb.europe-west1.firebasedatabase.app/",
-      projectId: "padel-scoreboard",
-      storageBucket: "padel-scoreboard.appspot.com",
-      messagingSenderId: "1042506310795",
-      appId: "1:1042506310795:web:df5861c7cc24816393208e"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhjao8J2BFKz1LVrWcNTsk-ztcSr01tmE",
+    authDomain: "padel-scoreboard.firebaseapp.com",
+    databaseURL: "https://padel-scoreboard-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "padel-scoreboard",
+    storageBucket: "padel-scoreboard.appspot.com",
+    messagingSenderId: "1042506310795",
+    appId: "1:1042506310795:web:df5861c7cc24816393208e"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const scoresRef = ref(db, 'scoreboard');
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const scoresRef = ref(db, 'scoreboard');
 
-    let score1 = 0, score2 = 0, ties = 0, history = [];
-    let suppressSave = false;
+  let score1 = 0, score2 = 0, ties = 0, history = [];
+  let suppressSave = false;
 
-    onValue(scoresRef, snapshot => {
-      const data = snapshot.val();
-      if (data) {
-        suppressSave = true;
-        score1 = data.score1 || 0;
-        score2 = data.score2 || 0;
-        ties = data.ties || 0;
-        history = data.history || [];
-        if (!Array.isArray(history)) history = Object.values(history).reverse();
-        update(false);
-        suppressSave = false;
-      } else saveToFirebase();
-    });
+  function celebrate() {
+    // Trophy
+    const trophy = document.createElement('div');
+    trophy.className = 'trophy';
+    trophy.textContent = '🏆';
+    document.body.appendChild(trophy);
+    setTimeout(() => trophy.remove(), 3000);
 
-    function saveToFirebase() {
-      if (suppressSave) return;
-      set(scoresRef, { score1, score2, ties, history })
-        .catch(err => console.error("Erro ao salvar no Firebase:", err));
+    // Confetti
+    for(let i=0;i<50;i++){
+      const conf = document.createElement('div');
+      conf.className='confetti';
+      conf.style.left=Math.random()*100+'vw';
+      conf.style.backgroundColor = ['#ffd700','#ff0000','#00ff00','#00ffff','#ff00ff'][Math.floor(Math.random()*5)];
+      conf.style.animationDuration = (2+Math.random()*2)+'s';
+      document.body.appendChild(conf);
+      setTimeout(()=>conf.remove(), 3000);
     }
+  }
 
-    function addWin(team) {
-      const time = new Date().toLocaleString();
-      if (team === 1) { score1++; history.unshift(`${time}: Zé + Sandrina won`); }
-      else { score2++; history.unshift(`${time}: Vitor + Leandro won`); }
-      update(true);
-    }
+  onValue(scoresRef, snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      suppressSave = true;
+      score1 = data.score1 || 0;
+      score2 = data.score2 || 0;
+      ties = data.ties || 0;
+      history = data.history || [];
+      if (!Array.isArray(history)) history = Object.values(history).reverse();
+      update(false);
+      suppressSave = false;
+    } else saveToFirebase();
+  });
 
-    function removeWin(team) {
-      if (team === 1 && score1 > 0) { score1--; history.shift(); }
-      else if (team === 2 && score2 > 0) { score2--; history.shift(); }
-      update(true);
-    }
+  function saveToFirebase() {
+    if (suppressSave) return;
+    set(scoresRef, { score1, score2, ties, history })
+      .catch(err => console.error("Erro ao salvar no Firebase:", err));
+  }
 
-    function addTie() {
-      const time = new Date().toLocaleString();
-      ties++; history.unshift(`${time}: Match tied`);
-      update(true);
-    }
+  function addWin(team) {
+    const time = new Date().toLocaleString();
+    if (team === 1) { score1++; history.unshift(`${time}: Zé + Sandrina won`); }
+    else { score2++; history.unshift(`${time}: Vitor + Leandro won`); }
+    update(true);
+    celebrate(); // trigger animation
+  }
 
-    function resetSeason() {
-      if (!confirm("Reset the season scores?")) return;
-      score1 = 0; score2 = 0; ties = 0; history = [];
-      update(true);
-    }
+  function removeWin(team) {
+    if (team === 1 && score1 > 0) { score1--; history.shift(); }
+    else if (team === 2 && score2 > 0) { score2--; history.shift(); }
+    update(true);
+  }
 
-    function update(save = true) {
-      document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
-      document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
-      document.getElementById("totalMatches").textContent = score1 + score2 + ties;
-      document.getElementById("ties").textContent = ties;
-      document.getElementById("rate1").textContent = (score1+score2+ties>0) ? Math.round(score1/(score1+score2+ties)*100)+"%" : "0%";
-      document.getElementById("rate2").textContent = (score1+score2+ties>0) ? Math.round(score2/(score1+score2+ties)*100)+"%" : "0%";
+  function addTie() {
+    const time = new Date().toLocaleString();
+    ties++; history.unshift(`${time}: Match tied`);
+    update(true);
+  }
 
-      const list = document.getElementById("historyList");
-      list.innerHTML = "";
-      history.forEach(item => { const li = document.createElement("li"); li.textContent = item; list.appendChild(li); });
+  function resetSeason() {
+    if (!confirm("Reset the season scores?")) return;
+    score1 = 0; score2 = 0; ties = 0; history = [];
+    update(true);
+  }
 
-      updateBadges();
-      if (save) saveToFirebase();
-    }
+  function update(save = true) {
+    document.getElementById("score1").innerHTML = score1 + " <span id='badge1' class='badges'></span>";
+    document.getElementById("score2").innerHTML = score2 + " <span id='badge2' class='badges'></span>";
+    document.getElementById("totalMatches").textContent = score1 + score2 + ties;
+    document.getElementById("ties").textContent = ties;
+    document.getElementById("rate1").textContent = (score1+score2+ties>0) ? Math.round(score1/(score1+score2+ties)*100)+"%" : "0%";
+    document.getElementById("rate2").textContent = (score1+score2+ties>0) ? Math.round(score2/(score1+score2+ties)*100)+"%" : "0%";
 
-    function updateBadges() {
-      const b1 = document.getElementById("badge1");
-      const b2 = document.getElementById("badge2");
-      b1.textContent = ""; b2.textContent = "";
-      if (score1 > score2) { b1.textContent = "🥇"; b2.textContent = "💩"; }
-      else if (score2 > score1) { b2.textContent = "🥇"; b1.textContent = "💩"; }
-    }
+    const list = document.getElementById("historyList");
+    list.innerHTML = "";
+    history.forEach(item => { const li = document.createElement("li"); li.textContent = item; list.appendChild(li); });
 
-    function secureAction(action) {
-      const pin = prompt("Enter PIN to edit:");
-      if (pin === "0000") action();
-      else alert("Wrong PIN!");
-    }
+    updateBadges();
+    if (save) saveToFirebase();
+  }
 
-    window.addWin = addWin;
-    window.removeWin = removeWin;
-    window.addTie = addTie;
-    window.resetSeason = resetSeason;
-    window.secureAction = secureAction;
+  function updateBadges() {
+    const b1 = document.getElementById("badge1");
+    const b2 = document.getElementById("badge2");
+    b1.textContent = ""; b2.textContent = "";
+    if (score1 > score2) { b1.textContent = "🥇"; b2.textContent = "💩"; }
+    else if (score2 > score1) { b2.textContent = "🥇"; b1.textContent = "💩"; }
+  }
 
-    update(false);
-  </script>
+  function secureAction(action) {
+    const pin = prompt("Enter PIN to edit:");
+    if (pin === "0000") action();
+    else alert("Wrong PIN!");
+  }
+
+  window.addWin = addWin;
+  window.removeWin = removeWin;
+  window.addTie = addTie;
+  window.resetSeason = resetSeason;
+  window.secureAction = secureAction;
+
+  update(false);
+</script>
 </body>
 </html>
+
