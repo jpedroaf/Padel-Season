@@ -1,223 +1,156 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Padel Scoreboard 2025/2026</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #1e1e2f, #2a2a40);
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 10px #ff6600;
-    }
-    .teams {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .team {
-      background: #333;
-      border-radius: 20px;
-      padding: 20px;
-      width: 280px;
-      box-shadow: 0 0 15px #ff6600;
-    }
-    .players {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 1rem;
-    }
-    .player-img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #ff6600;
-      box-shadow: 0 0 10px #ff6600;
-    }
-    .score {
-      font-size: 2.5rem;
-      margin: 10px 0;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 12px;
-      background: #ff6600;
-      color: white;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: transform 0.2s;
-    }
-    button:hover {
-      transform: scale(1.1);
-      background: #ffa500;
-    }
-    .middle {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .history {
-      margin-top: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-      text-align: left;
-      background: #222;
-      padding: 10px;
-      border-radius: 10px;
-    }
-    .stats {
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <h1>🔥 Padel Season 2025/2026 🔥</h1>
-  <div class="teams">
-    <!-- Team 1 -->
-    <div class="team">
-      <h2>Zé + Sandrina</h2>
-      <div class="players">
-        <img src="images/ze.JPG" alt="Zé" class="player-img">
-        <img src="images/sandrina.JPG" alt="Sandrina" class="player-img">
-      </div>
-      <div class="score" id="score1">0 <span id="badge1"></span></div>
-      <button onclick="secureAction(() => addWin(1))">+ Win</button>
-      <button onclick="secureAction(() => removeWin(1))">- Win</button>
-    </div>
+<!-- COLE ISTO NO LUGAR DO SCRIPT ANTIGO (substitua firebaseConfig pelos seus valores) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    <!-- Middle Tie Button -->
-    <div class="middle">
-      <button onclick="secureAction(() => addTie())">+ Tie</button>
-    </div>
+  // <-- substitua este objeto com os valores do seu Firebase Console -->
+  const firebaseConfig = {
+  apiKey: "AIzaSyBhjao8J2BFKz1LVrWcNTsk-ztcSr01tmE",
+  authDomain: "padel-scoreboard.firebaseapp.com",
+  databaseURL: "https://padel-scoreboard-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "padel-scoreboard",
+  storageBucket: "padel-scoreboard.firebasestorage.app",
+  messagingSenderId: "1042506310795",
+  appId: "1:1042506310795:web:df5861c7cc24816393208e"
+};
 
-    <!-- Team 2 -->
-    <div class="team">
-      <h2>Vitor + Leandro</h2>
-      <div class="players">
-        <img src="images/vitor.JPG" alt="Vitor" class="player-img">
-        <img src="images/leandro.JPG" alt="Leandro" class="player-img">
-      </div>
-      <div class="score" id="score2">0 <span id="badge2"></span></div>
-      <button onclick="secureAction(() => addWin(2))">+ Win</button>
-      <button onclick="secureAction(() => removeWin(2))">- Win</button>
-    </div>
-  </div>
+  // inicializa Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const scoresRef = ref(db, 'scoreboard'); // nó principal onde guardaremos os dados
 
-  <!-- Reset Button -->
-  <button onclick="secureAction(resetSeason)">Reset Season</button>
+  // variáveis do placar
+  let score1 = 0;
+  let score2 = 0;
+  let ties = 0;
+  let history = [];
 
-  <!-- Stats -->
-  <div class="stats">
-    <p>Total Matches: <span id="totalMatches">0</span></p>
-    <p>Team 1 Win Rate: <span id="rate1">0%</span> | Team 2 Win Rate: <span id="rate2">0%</span> | Ties: <span id="ties">0</span></p>
-  </div>
-
-  <!-- Match History -->
-  <div class="history" id="history">
-    <h3>📜 Match History</h3>
-    <ul id="historyList"></ul>
-  </div>
-
-  <script>
-    let score1 = 0;
-    let score2 = 0;
-    let ties = 0;
-    let history = [];
-
-    function addWin(team) {
-      const time = new Date().toLocaleString();
-      if (team === 1) {
-        score1++;
-        history.unshift(`${time}: Zé + Sandrina won`);
-      } else {
-        score2++;
-        history.unshift(`${time}: Vitor + Leandro won`);
+  // quando o DB mudar, atualizar a UI (não gravar de volta neste evento)
+  let suppressSave = false;
+  onValue(scoresRef, snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      suppressSave = true; // evita gravar de volta o mesmo dado
+      score1 = data.score1 || 0;
+      score2 = data.score2 || 0;
+      ties = data.ties || 0;
+      history = data.history || [];
+      // se history chegou como objeto (por algo), convert para array ordenado
+      if (!Array.isArray(history)) {
+        history = Object.values(history).reverse();
       }
-      update();
+      update(false); // false = não salvar de volta (porque veio do servidor)
+      suppressSave = false;
+    } else {
+      // se DB estiver vazio, inicializa dados remotos
+      saveToFirebase();
     }
+  });
 
-    function removeWin(team) {
-      if (team === 1 && score1 > 0) score1--;
-      if (team === 2 && score2 > 0) score2--;
-      update();
+  function saveToFirebase() {
+    if (suppressSave) return;
+    // escreve o objeto inteiro no nó 'scoreboard'
+    set(scoresRef, { score1, score2, ties, history })
+      .catch(err => console.error("Erro ao salvar no Firebase:", err));
+  }
+
+  // funções que modificam estado local e chamam update(true) para salvar
+  function addWin(team) {
+    const time = new Date().toLocaleString();
+    if (team === 1) {
+      score1++;
+      history.unshift(`${time}: Zé + Sandrina won`);
+    } else {
+      score2++;
+      history.unshift(`${time}: Vitor + Leandro won`);
     }
+    update(true);
+  }
 
-    function addTie() {
-      const time = new Date().toLocaleString();
-      ties++;
-      history.unshift(`${time}: Match tied`);
-      update();
+  function removeWin(team) {
+    if (team === 1 && score1 > 0) {
+      score1--;
+      // remover último registro da história — simples: shift/pop depende de como você quer
+      history.shift();
+    } else if (team === 2 && score2 > 0) {
+      score2--;
+      history.shift();
     }
+    update(true);
+  }
 
-    function resetSeason() {
-      score1 = 0;
-      score2 = 0;
-      ties = 0;
-      history = [];
-      update();
-    }
+  function addTie() {
+    const time = new Date().toLocaleString();
+    ties++;
+    history.unshift(`${time}: Match tied`);
+    update(true);
+  }
 
-    function update() {
-      document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
-      document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
+  function resetSeason() {
+    if (!confirm("Reset the season scores?")) return;
+    score1 = 0; score2 = 0; ties = 0; history = [];
+    update(true);
+  }
 
-      const totalMatches = score1 + score2 + ties;
-      document.getElementById("totalMatches").textContent = totalMatches;
-      document.getElementById("ties").textContent = ties;
-      document.getElementById("rate1").textContent = totalMatches > 0 ? Math.round((score1/totalMatches)*100) + "%" : "0%";
-      document.getElementById("rate2").textContent = totalMatches > 0 ? Math.round((score2/totalMatches)*100) + "%" : "0%";
+  // update DOM; se save === true -> salva no Firebase
+  function update(save = true) {
+    document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
+    document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
 
-      const list = document.getElementById("historyList");
+    const totalMatches = score1 + score2 + ties;
+    document.getElementById("totalMatches").textContent = totalMatches;
+    const rate1 = totalMatches > 0 ? Math.round((score1/totalMatches)*100) + "%" : "0%";
+    const rate2 = totalMatches > 0 ? Math.round((score2/totalMatches)*100) + "%" : "0%";
+    document.getElementById("rate1").textContent = rate1;
+    document.getElementById("rate2").textContent = rate2;
+    document.getElementById("ties").textContent = ties;
+
+    // history list
+    const list = document.getElementById("historyList");
+    if (list) {
       list.innerHTML = "";
       history.forEach(item => {
         const li = document.createElement("li");
         li.textContent = item;
         list.appendChild(li);
       });
-
-      updateBadges();
     }
 
-    function updateBadges() {
-      const badge1 = document.getElementById("badge1");
-      const badge2 = document.getElementById("badge2");
-      badge1.textContent = "";
-      badge2.textContent = "";
+    updateBadges();
 
-      if (score1 > score2) {
-        badge1.textContent = "🥇";
-        badge2.textContent = "💩";
-      } else if (score2 > score1) {
-        badge2.textContent = "🥇";
-        badge1.textContent = "💩";
-      }
+    if (save) saveToFirebase();
+  }
+
+  function updateBadges() {
+    const b1 = document.getElementById("badge1");
+    const b2 = document.getElementById("badge2");
+    if (!b1 || !b2) return;
+    b1.textContent = ""; b2.textContent = "";
+    if (score1 > score2) { b1.textContent = "🥇"; b2.textContent = "💩"; }
+    else if (score2 > score1) { b2.textContent = "🥇"; b1.textContent = "💩"; }
+  }
+
+  // PIN protection (mantém a sua função atual)
+  function secureAction(action) {
+    const pin = prompt("Enter PIN to edit:");
+    if (pin === "0000") {
+      action();
+    } else {
+      alert("Wrong PIN!");
     }
+  }
 
-    function secureAction(action) {
-      const pin = prompt("Enter PIN to edit:");
-      if (pin === "0000") {
-        action();
-      } else {
-        alert("Wrong PIN!");
-      }
-    }
+  // expose functions para os botões (caso estejam fora do escopo)
+  window.addWin = addWin;
+  window.removeWin = removeWin;
+  window.addTie = addTie;
+  window.resetSeason = resetSeason;
+  window.secureAction = secureAction;
 
-    update();
-  </script>
-</body>
-</html>
+  // inicializa UI (se não veio nada do Firebase ainda)
+  update(false);
+</script>
+
 
 
 
