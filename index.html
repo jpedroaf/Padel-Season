@@ -1,152 +1,188 @@
-<!-- COLE ISTO NO LUGAR DO SCRIPT ANTIGO (substitua firebaseConfig pelos seus valores) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // <-- substitua este objeto com os valores do seu Firebase Console -->
-  const firebaseConfig = {
-  apiKey: "AIzaSyBhjao8J2BFKz1LVrWcNTsk-ztcSr01tmE",
-  authDomain: "padel-scoreboard.firebaseapp.com",
-  databaseURL: "https://padel-scoreboard-default-rtdb.europe-west1.firebasedatabase.app/",
-  projectId: "padel-scoreboard",
-  storageBucket: "padel-scoreboard.appspot.com",
-  messagingSenderId: "1042506310795",
-  appId: "1:1042506310795:web:df5861c7cc24816393208e"
-};
-
-  // inicializa Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const scoresRef = ref(db, 'scoreboard'); // nó principal onde guardaremos os dados
-
-  // variáveis do placar
-  let score1 = 0;
-  let score2 = 0;
-  let ties = 0;
-  let history = [];
-
-  // quando o DB mudar, atualizar a UI (não gravar de volta neste evento)
-  let suppressSave = false;
-  onValue(scoresRef, snapshot => {
-    const data = snapshot.val();
-    if (data) {
-      suppressSave = true; // evita gravar de volta o mesmo dado
-      score1 = data.score1 || 0;
-      score2 = data.score2 || 0;
-      ties = data.ties || 0;
-      history = data.history || [];
-      // se history chegou como objeto (por algo), convert para array ordenado
-      if (!Array.isArray(history)) {
-        history = Object.values(history).reverse();
-      }
-      update(false); // false = não salvar de volta (porque veio do servidor)
-      suppressSave = false;
-    } else {
-      // se DB estiver vazio, inicializa dados remotos
-      saveToFirebase();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Padel Scoreboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
     }
-  });
-
-  function saveToFirebase() {
-    if (suppressSave) return;
-    // escreve o objeto inteiro no nó 'scoreboard'
-    set(scoresRef, { score1, score2, ties, history })
-      .catch(err => console.error("Erro ao salvar no Firebase:", err));
-  }
-
-  // funções que modificam estado local e chamam update(true) para salvar
-  function addWin(team) {
-    const time = new Date().toLocaleString();
-    if (team === 1) {
-      score1++;
-      history.unshift(`${time}: Zé + Sandrina won`);
-    } else {
-      score2++;
-      history.unshift(`${time}: Vitor + Leandro won`);
+    h1 { margin-bottom: 20px; }
+    .scores {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 20px;
     }
-    update(true);
-  }
-
-  function removeWin(team) {
-    if (team === 1 && score1 > 0) {
-      score1--;
-      // remover último registro da história — simples: shift/pop depende de como você quer
-      history.shift();
-    } else if (team === 2 && score2 > 0) {
-      score2--;
-      history.shift();
+    .team {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 180px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    update(true);
-  }
+    .team h2 { margin-bottom: 10px; }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    #historyContainer {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 400px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #historyContainer ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Padel Scoreboard</h1>
+  
+  <div class="scores">
+    <div class="team">
+      <h2>Team Zé + Sandrina</h2>
+      <p id="score1">0 <span id="badge1"></span></p>
+      <button onclick="secureAction(() => addWin(1))">Add Win</button>
+      <button onclick="secureAction(() => removeWin(1))">Remove Win</button>
+    </div>
 
-  function addTie() {
-    const time = new Date().toLocaleString();
-    ties++;
-    history.unshift(`${time}: Match tied`);
-    update(true);
-  }
+    <div class="team">
+      <h2>Team Vitor + Leandro</h2>
+      <p id="score2">0 <span id="badge2"></span></p>
+      <button onclick="secureAction(() => addWin(2))">Add Win</button>
+      <button onclick="secureAction(() => removeWin(2))">Remove Win</button>
+    </div>
+  </div>
 
-  function resetSeason() {
-    if (!confirm("Reset the season scores?")) return;
-    score1 = 0; score2 = 0; ties = 0; history = [];
-    update(true);
-  }
+  <p>Total Matches: <span id="totalMatches">0</span></p>
+  <p>Ties: <span id="ties">0</span></p>
+  <p>Win Rates: <span id="rate1">0%</span> - <span id="rate2">0%</span></p>
 
-  // update DOM; se save === true -> salva no Firebase
-  function update(save = true) {
-    document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
-    document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
+  <button onclick="addTie()">Add Tie</button>
+  <button onclick="secureAction(resetSeason)">Reset Season</button>
 
-    const totalMatches = score1 + score2 + ties;
-    document.getElementById("totalMatches").textContent = totalMatches;
-    const rate1 = totalMatches > 0 ? Math.round((score1/totalMatches)*100) + "%" : "0%";
-    const rate2 = totalMatches > 0 ? Math.round((score2/totalMatches)*100) + "%" : "0%";
-    document.getElementById("rate1").textContent = rate1;
-    document.getElementById("rate2").textContent = rate2;
-    document.getElementById("ties").textContent = ties;
+  <div id="historyContainer">
+    <h3>Match History</h3>
+    <ul id="historyList"></ul>
+  </div>
 
-    // history list
-    const list = document.getElementById("historyList");
-    if (list) {
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhjao8J2BFKz1LVrWcNTsk-ztcSr01tmE",
+      authDomain: "padel-scoreboard.firebaseapp.com",
+      databaseURL: "https://padel-scoreboard-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "padel-scoreboard",
+      storageBucket: "padel-scoreboard.appspot.com",
+      messagingSenderId: "1042506310795",
+      appId: "1:1042506310795:web:df5861c7cc24816393208e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const scoresRef = ref(db, 'scoreboard');
+
+    let score1 = 0, score2 = 0, ties = 0, history = [];
+    let suppressSave = false;
+
+    onValue(scoresRef, snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        suppressSave = true;
+        score1 = data.score1 || 0;
+        score2 = data.score2 || 0;
+        ties = data.ties || 0;
+        history = data.history || [];
+        if (!Array.isArray(history)) history = Object.values(history).reverse();
+        update(false);
+        suppressSave = false;
+      } else saveToFirebase();
+    });
+
+    function saveToFirebase() {
+      if (suppressSave) return;
+      set(scoresRef, { score1, score2, ties, history })
+        .catch(err => console.error("Erro ao salvar no Firebase:", err));
+    }
+
+    function addWin(team) {
+      const time = new Date().toLocaleString();
+      if (team === 1) { score1++; history.unshift(`${time}: Zé + Sandrina won`); }
+      else { score2++; history.unshift(`${time}: Vitor + Leandro won`); }
+      update(true);
+    }
+
+    function removeWin(team) {
+      if (team === 1 && score1 > 0) { score1--; history.shift(); }
+      else if (team === 2 && score2 > 0) { score2--; history.shift(); }
+      update(true);
+    }
+
+    function addTie() {
+      const time = new Date().toLocaleString();
+      ties++; history.unshift(`${time}: Match tied`);
+      update(true);
+    }
+
+    function resetSeason() {
+      if (!confirm("Reset the season scores?")) return;
+      score1 = 0; score2 = 0; ties = 0; history = [];
+      update(true);
+    }
+
+    function update(save = true) {
+      document.getElementById("score1").innerHTML = score1 + " <span id='badge1'></span>";
+      document.getElementById("score2").innerHTML = score2 + " <span id='badge2'></span>";
+      document.getElementById("totalMatches").textContent = score1 + score2 + ties;
+      document.getElementById("ties").textContent = ties;
+      document.getElementById("rate1").textContent = (score1+score2+ties>0) ? Math.round(score1/(score1+score2+ties)*100)+"%" : "0%";
+      document.getElementById("rate2").textContent = (score1+score2+ties>0) ? Math.round(score2/(score1+score2+ties)*100)+"%" : "0%";
+
+      const list = document.getElementById("historyList");
       list.innerHTML = "";
-      history.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        list.appendChild(li);
-      });
+      history.forEach(item => { const li = document.createElement("li"); li.textContent = item; list.appendChild(li); });
+
+      updateBadges();
+      if (save) saveToFirebase();
     }
 
-    updateBadges();
-
-    if (save) saveToFirebase();
-  }
-
-  function updateBadges() {
-    const b1 = document.getElementById("badge1");
-    const b2 = document.getElementById("badge2");
-    if (!b1 || !b2) return;
-    b1.textContent = ""; b2.textContent = "";
-    if (score1 > score2) { b1.textContent = "🥇"; b2.textContent = "💩"; }
-    else if (score2 > score1) { b2.textContent = "🥇"; b1.textContent = "💩"; }
-  }
-
-  // PIN protection (mantém a sua função atual)
-  function secureAction(action) {
-    const pin = prompt("Enter PIN to edit:");
-    if (pin === "0000") {
-      action();
-    } else {
-      alert("Wrong PIN!");
+    function updateBadges() {
+      const b1 = document.getElementById("badge1");
+      const b2 = document.getElementById("badge2");
+      b1.textContent = ""; b2.textContent = "";
+      if (score1 > score2) { b1.textContent = "🥇"; b2.textContent = "💩"; }
+      else if (score2 > score1) { b2.textContent = "🥇"; b1.textContent = "💩"; }
     }
-  }
 
-  // expose functions para os botões (caso estejam fora do escopo)
-  window.addWin = addWin;
-  window.removeWin = removeWin;
-  window.addTie = addTie;
-  window.resetSeason = resetSeason;
-  window.secureAction = secureAction;
+    function secureAction(action) {
+      const pin = prompt("Enter PIN to edit:");
+      if (pin === "0000") action();
+      else alert("Wrong PIN!");
+    }
 
-  // inicializa UI (se não veio nada do Firebase ainda)
-  update(false);
-</script>
+    window.addWin = addWin;
+    window.removeWin = removeWin;
+    window.addTie = addTie;
+    window.resetSeason = resetSeason;
+    window.secureAction = secureAction;
+
+    update(false);
+  </script>
+</body>
+</html>
